@@ -65,8 +65,8 @@ class Insert(Procedure):
 				min(dt + datetime.timedelta(seconds=np.random.randint(30, 600)), self.end_datetime) \
 				for dt in login_datetimes if np.random.uniform() < 0.3
 			]
-			avg_person_payment = self._get_exp_var(5.) * max_payment
-			payments = zip([np.abs(np.random.normal(avg_person_payment, sigma)) for i in range(len(login_datetimes))], login_datetimes)
+			avg_user_payment = self._get_exp_var(5.) * max_payment
+			payments = zip([np.abs(np.random.normal(avg_user_payment, sigma)) for _ in range(len(payments_datetimes))], payments_datetimes)
 			yield ref, reg_datetime, login_datetimes, payments
 	
 
@@ -75,12 +75,11 @@ class Insert(Procedure):
 		batch_size = args['batch_size']
 		datetime_fmt = '%Y-%m-%d %H:%M:%S'
 		
-		ids = (i for i in range(start_point, start_point + batch_size))
-		
 		insert_fact_reg = 'INSERT INTO {}.fact_reg (`user_id`, `ref`, `ts`) VALUES '.format(self.db.name)
 		insert_fact_log = 'INSERT INTO {}.fact_login (`user_id`, `ts`) VALUES '.format(self.db.name)
 		insert_fact_pay = 'INSERT INTO {}.fact_payment (`user_id`, `USD`, `ts`) VALUES '.format(self.db.name)
 		
+		ids = (i for i in range(start_point, start_point + batch_size))
 		for i, user_data in enumerate(self._get_user_data(batch_size)):
 			ref, reg_datetime, login_datetimes, payments = user_data
 			user_id = next(ids)
@@ -91,9 +90,11 @@ class Insert(Procedure):
 			insert_fact_log += ','.join([
 				"({}, toUnixTimestamp('{}'))".format(user_id, ts.strftime(datetime_fmt)) for ts in login_datetimes
 			]) + sep
-			insert_fact_pay += ','.join([
+			new_payments = ','.join([
 				"({}, {}, toUnixTimestamp('{}'))".format(user_id, usd, ts.strftime(datetime_fmt)) for usd, ts in payments
-			]) + sep
+			])
+			if new_payments:
+				insert_fact_pay += new_payments + sep
 		return insert_fact_reg, insert_fact_log, insert_fact_pay
 
 
