@@ -1,3 +1,4 @@
+from dateutil import parser
 from tabulate import tabulate
 from .base import Procedure, timer
 
@@ -31,4 +32,11 @@ class Retention(Procedure):
 					pattern=options.ref
 				)
 			)
-		return tabulate(result, headers=('day', 'retention'), tablefmt='orgtbl')
+			days = [day for day, retention in result]
+			period_start = parser.parse(options.start)
+			period_end = parser.parse(options.end)
+			for day in range((period_end - period_start).days):
+				if day not in days:
+					result.append((day, 0))
+
+		return tabulate(sorted(result), headers=('day', 'retention'), tablefmt='orgtbl')
