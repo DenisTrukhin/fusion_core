@@ -26,8 +26,6 @@ class Insert(Procedure):
 
 
 	def __call__(self, options):
-		self.db.create_database()
-		self.db.create_tables()
 		self.insert(options.number)
 
 

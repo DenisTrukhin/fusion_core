@@ -12,6 +12,8 @@ class Database:
 		self.client = Client.from_url('clickhouse://{}:{}@{}:{}'.format(user, password, host, port))
 		self._test_connection()
 		self.name = db_name
+		self._create_database()
+		self._create_tables()
 
 
 	def _test_connection(self):
@@ -24,12 +26,12 @@ class Database:
 
 
 
-	def create_database(self):
+	def _create_database(self):
 		query = 'CREATE DATABASE IF NOT EXISTS {}'.format(self.name)
 		self.client.execute(query)
 
 
-	def create_tables(self):
+	def _create_tables(self):
 		tables_module = sys.modules.get('database.tables')
 		if not tables_module:
 			raise ModuleNotFoundError('The tables module has been lost')
